@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Marks Lookup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            display: none;
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Math2 Marks</h1>
+        
+        <div class="input-group">
+            <label for="nationalId">Enter Your National ID:</label>
+            <input type="text" id="nationalId" placeholder="e.g. 30505091700459">
+        </div>
+        
+        <button onclick="lookupStudent()">Search</button>
+        
+        <div id="error" class="error"></div>
+        
+        <div id="result" class="result">
+            <h2>Student Information</h2>
+            <table>
+                <tr>
+                    <th>National ID</th>
+                    <td id="displayNationalId"></td>
+                </tr>
+                <tr>
+                    <th>Student ID</th>
+                    <td id="studentId"></td>
+                </tr>
+                <tr>
+                    <th>Name</th>
+                    <td id="studentName"></td>
+                </tr>
+            </table>
+            
+            <h2>Marks</h2>
+            <table>
+                <tr>
+                    <th>Quiz 1 (out of 15)</th>
+                    <td id="quiz1"></td>
+                </tr>
+                <tr>
+                    <th>Midterm (out of 20)</th>
+                    <td id="midterm"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Student data from the Excel file
+        const studentData = [
+            { nationalId: "30505091700459.0", id: "2301008.0", name: "Ahmed Ibrahim Mohamed Shibl", quiz1: "", mid: "" },
+            { nationalId: "30602181402592.0", id: "2301014.0", name: "Ahmed Sayed Abo Srea", quiz1: "", mid: "" },
+            { nationalId: "30404041703057.0", id: "2301018.0", name: "ahmed asem mahmoud shaltout", quiz1: "2.0", mid: "" },
+            { nationalId: "30504011706935.0", id: "2301137.0", name: "Abdelrahman Elsayed Abdelwarth Sharf Eldin", quiz1: "", mid: "" },
+            { nationalId: "30510011353471.0", id: "2301160.0", name: "Omar Abdelmegeid Ahmed Abdmegid", quiz1: "", mid: "" },
+            { nationalId: "30502181801476.0", id: "2301184.0", name: "Mohamed Elsayed Salah Mohamed", quiz1: "", mid: "2.0" },
+            { nationalId: "30510011409655.0", id: "2301224.0", name: "Mahmoud Khaled Attia Elsayed", quiz1: "", mid: "" },
+            { nationalId: "30509242403716.0", id: "2301263.0", name: "Mina Hanin Wahib", quiz1: "4.0", mid: "" },
+            { nationalId: "30508221800131.0", id: "2301304.0", name: "Moaz Mahmoud Elsayed", quiz1: "", mid: "" },
+            { nationalId: "30507171700215.0", id: "2301305.0", name: "Amr Wael Abdelaziz", quiz1: "1.0", mid: "" },
+            { nationalId: "30506020106625.0", id: "2401001.0", name: "fayroz moataz mohamed mahmoud", quiz1: "2.0", mid: "13.0" },
+            { nationalId: "30508011707317.0", id: "2401003.0", name: "Ibrahim Fathy Elsayed Turkey", quiz1: "7.0", mid: "14.0" },
+            { nationalId: "30608201703665.0", id: "2401007.0", name: "Nada alaa ibrahim elsayed zahra", quiz1: "", mid: "17.0" },
+            { nationalId: "30510151703162.0", id: "2401008.0", name: "omnia araby mahmoud abdelrahman", quiz1: "", mid: "" },
+            { nationalId: "30601011701149.0", id: "2401009.0", name: "Sama rafik elahmady elfeky", quiz1: "13.0", mid: "13.0" },
+            { nationalId: "30601102403493.0", id: "2401011.0", name: "Mohamed ayman abdelrahem mosaad", quiz1: "8.0", mid: "" },
+            { nationalId: "30506050105798.0", id: "2401013.0", name: "Abdelrahman mohamed saad hamed", quiz1: "3.0", mid: "4.0" },
+            { nationalId: "30602061600994.0", id: "2401014.0", name: "youssef amgad farouk Mohamed El-samalegy", quiz1: "", mid: "9.0" },
+            { nationalId: "30604011600864.0", id: "2401015.0", name: "rokaia mohamed abdealsattar elzahby", quiz1: "", mid: "12.0" },
+            { nationalId: "30605182102109.0", id: "2401016.0", name: "Alaa Mahmoud Saad Mohamed Saas", quiz1: "7.0", mid: "17.0" },
+            { nationalId: "30611190203232.0", id: "2401019.0", name: "Marawan Ibrahim ali eldien gomaa", quiz1: "9.0", mid: "14.0" },
+            { nationalId: "30703078801234.0", id: "2401022.0", name: "Ahmed mohamed Abdelalim Abdelaziz Elataar", quiz1: "13.0", mid: "14.0" },
+            { nationalId: "30602041701026.0", id: "2401023.0", name: "Rahma mohamed abokassab yousef", quiz1: "2.0", mid: "10.0" },
+            { nationalId: "30612171600898.0", id: "2401025.0", name: "Yousef Mohamed Elsayed Elmattet", quiz1: "0.0", mid: "8.0" },
+            { nationalId: "30611202103654.0", id: "2401026.0", name: "Mahmoud Ahmed Taha Elsaid", quiz1: "", mid: "9.0" },
+            { nationalId: "30609061700349.0", id: "2401030.0", name: "Shahd mohamed alnabawy keshk", quiz1: "6.0", mid: "13.0" },
+            { nationalId: "30601071801576.0", id: "2401032.0", name: "Ramy adel osman mahmoud", quiz1: "13.0", mid: "10.0" },
+            { nationalId: "30611091702464.0", id: "2401034.0", name: "wafaa gaber abdelhakim khalefa", quiz1: "10.0", mid: "11.0" },
+            { nationalId: "30609100200537.0", id: "2401038.0", name: "Ammar Ebrahim Ebrahim Ali", quiz1: "15.0", mid: "18.0" },
+            { nationalId: "30507111800997.0", id: "2401039.0", name: "Ahmed shwaki aboelftoh eid", quiz1: "11.0", mid: "6.0" },
+            { nationalId: "30604091500083.0", id: "2401040.0", name: "Tasneem Abdelfattah Saad Abdeldaym", quiz1: "", mid: "13.0" },
+            { nationalId: "30512051702803.0", id: "2401041.0", name: "Nada saied abdelfatah saleh", quiz1: "", mid: "7.0" },
+            { nationalId: "30608131802644.0", id: "2401045.0", name: "Malk Adel Mohamed Ali", quiz1: "2.0", mid: "4.0" },
+            { nationalId: "30606031701651.0", id: "2401048.0", name: "Ahmed Hassan Abdelmonsef El-sayed Sallam", quiz1: "6.0", mid: "11.0" },
+            { nationalId: "30608031701263.0", id: "2401049.0", name: "Mariam hany mohamed aboelhaded", quiz1: "", mid: "8.0" },
+            { nationalId: "30610011713162.0", id: "2401051.0", name: "Nada Salah Abdelsatar Shalaby", quiz1: "0.0", mid: "9.0" },
+            { nationalId: "30601011710342.0", id: "2401052.0", name: "Arwa Akram Mohamed Gomaa Hagag", quiz1: "", mid: "9.0" },
+            { nationalId: "30512151702304.0", id: "2401054.0", name: "Nada khaled shaker mandour", quiz1: "9.0", mid: "15.0" },
+            { nationalId: "30502111701016.0", id: "2401057.0", name: "Abdulrahman Kamal Abdulsamie Afia", quiz1: "", mid: "5.0" },
+            { nationalId: "30701120203226.0", id: "2401059.0", name: "Shrouk mabrouk ahmed abdullah", quiz1: "", mid: "7.0" },
+            { nationalId: "30509291607394.0", id: "2401063.0", name: "Mohamed ashraf mohamed elgindy", quiz1: "", mid: "" },
+            { nationalId: "30511130202178.0", id: "2401065.0", name: "Ziad Mohamed Sameer Rafat", quiz1: "6.0", mid: "4.0" },
+            { nationalId: "30607201703375.0", id: "2401068.0", name: "Mohmad Ahmed Fathi Elkheshen", quiz1: "11.0", mid: "16.0" },
+            { nationalId: "30601011515507.0", id: "2401069.0", name: "Alyaa abdellatif mohamed abdellatif", quiz1: "3.0", mid: "9.0" },
+            { nationalId: "30611231403152.0", id: "2401070.0", name: "Abdelrahman Mohammed Refat Amin", quiz1: "2.0", mid: "8.0" },
+            { nationalId: "30607071700115.0", id: "2401071.0", name: "Ahmed Mohamed Ali Abdelalim Alghazali", quiz1: "6.0", mid: "7.0" },
+            { nationalId: "30606231800581.0", id: "2401080.0", name: "Mariam ahmed abdallah ibrahim", quiz1: "6.0", mid: "5.0" },
+            { nationalId: "30608011811089.0", id: "2401082.0", name: "Nour Mohamed Ali Ahmed", quiz1: "1.0", mid: "11.0" },
+            { nationalId: "30604212101459.0", id: "2401091.0", name: "Mohamed Abdel-Raouf Abdel-Aly Sedeq", quiz1: "0.0", mid: "4.0" },
+            { nationalId: "30701012125073.0", id: "2401094.0", name: "Mahmoud Mohamed Fathy Sayed", quiz1: "10.0", mid: "11.0" },
+            { nationalId: "30604201700326.0", id: "2401104.0", name: "Suhaila Sayed Hamed Hussein", quiz1: "11.0", mid: "20.0" },
+            { nationalId: "30604091802551.0", id: "2401105.0", name: "Mohamed Talaat Ahmed Yaqoub", quiz1: "", mid: "0.0" },
+            { nationalId: "30608301802393.0", id: "2401111.0", name: "Hamed Mohamed Salah Refai", quiz1: "0.0", mid: "7.0" },
+            { nationalId: "30702181700733.0", id: "2401114.0", name: "Mohamed Gamal Mahmoud Shalaby", quiz1: "2.0", mid: "7.0" },
+            { nationalId: "30603291802436.0", id: "2401115.0", name: "Ahmed Ramadan Abdelsalam Mohamed Yakoub", quiz1: "0.0", mid: "2.0" },
+            { nationalId: "30610261402944.0", id: "2401122.0", name: "Mariam Ahmed Aboul-Kheir Moussa Mahmoud", quiz1: "11.0", mid: "16.0" },
+            { nationalId: "30410230203081.0", id: "2401125.0", name: "Samah Mahmoud Gaber Mahmoud Ali", quiz1: "1.0", mid: "8.0" },
+            { nationalId: "30503101700212.0", id: "2401131.0", name: "Mahmoud Reda Abdallah Abdelmottaleb Ramadan", quiz1: "0.0", mid: "6.0" },
+            { nationalId: "30503161801336.0", id: "2401132.0", name: "Moamen Ahmed Hassan Hussein Abdelrahman Younes", quiz1: "0.0", mid: "2.0" },
+            { nationalId: "30503201700171.0", id: "2401133.0", name: "Abdelrahman Ahmed Heshmat Labib Shetlah", quiz1: "0.0", mid: "6.0" },
+            { nationalId: "30503201701356.0", id: "2401134.0", name: "Mohamed Fathy Labib Abdelhamid", quiz1: "1.0", mid: "8.0" },
+            { nationalId: "30503261702254.0", id: "2401135.0", name: "Fares Karam Ali El Moazen", quiz1: "0.0", mid: "1.0" },
+            { nationalId: "30504091700983.0", id: "2401136.0", name: "Anne Joseph Nagi Adeeb", quiz1: "0.0", mid: "10.0" },
+            { nationalId: "30505031701774.0", id: "2401139.0", name: "Khaled Ramadan Saad Gaballah", quiz1: "7.0", mid: "10.0" },
+            { nationalId: "30505051811517.0", id: "2401140.0", name: "Mohamed Fathy Ali Mabrouk Aram", quiz1: "1.0", mid: "7.0" },
+            { nationalId: "30505151801217.0", id: "2401142.0", name: "Ahmed Nabil Moussa Salem Rabie", quiz1: "3.0", mid: "4.0" },
+            { nationalId: "30506071802731.0", id: "2401145.0", name: "Islam Aboud Mohamed Abdelwahab El-Sheikh Youssef", quiz1: "0.0", mid: "5.0" },
+            { nationalId: "30506211800947.0", id: "2401146.0", name: "Menna Ayman Mohamed Sayed Ahmed Abdel-Qader", quiz1: "5.0", mid: "17.0" },
+            { nationalId: "30506291700549.0", id: "2401147.0", name: "Israa Hesham Abdelmonem Mohamed Allam", quiz1: "0.0", mid: "" },
+            { nationalId: "30507231805194.0", id: "2401150.0", name: "Anas Gaber Youssef Haidar El-Kashhat", quiz1: "0.0", mid: "1.0" },
+            { nationalId: "30508071700362.0", id: "2401151.0", name: "Nesma Emad Mohamed Sedeq El-Sisi", quiz1: "7.0", mid: "11.0" },
+            { nationalId: "30508231701328.0", id: "2401152.0", name: "Yasmine Samir Adel Ragab", quiz1: "15.0", mid: "20.0" },
+            { nationalId: "30508301700294.0", id: "2401153.0", name: "Mahmoud Basem Ibrahim Ismail", quiz1: "1.0", mid: "7.0" },
+            { nationalId: "30509081701924.0", id: "2401154.0", name: "Nada Abdel-Sattar Abdelmoneim Alam El-Din", quiz1: "0.0", mid: "2.0" },
+            { nationalId: "30509201806377.0", id: "2401157.0", name: "Wael Mohamed Abdelmoneim Mohamed Shahba", quiz1: "", mid: "0.0" },
+            { nationalId: "30510161702059.0", id: "2401159.0", name: "Abdelaziz Diaa Fathy Abdel Aziz Hammouda", quiz1: "13.0", mid: "11.0" },
+            { nationalId: "30510171701476.0", id: "2401160.0", name: "عبدالرحمن ضياء عطا عبدالتواب احمد", quiz1: "", mid: "2.0" },
+            { nationalId: "30510231701195.0", id: "2401161.0", name: "بيتر ميلاد زكريا سليمان جرجس", quiz1: "0.0", mid: "2.0" },
+            { nationalId: "30510251702554.0", id: "2401163.0", name: "سعيد عادل سعيد حامد عرفه", quiz1: "5.0", mid: "2.0" },
+            { nationalId: "30510251700888.0", id: "2401164.0", name: "رضوى طلعت عبدالعاطى راغب ابراهيم مدكور", quiz1: "6.0", mid: "13.0" },
+            { nationalId: "30511011702308.0", id: "2401165.0", name: "ملك اشرف احمد محمد القارح", quiz1: "4.0", mid: "7.0" },
+            { nationalId: "30511011803198.0", id: "2401166.0", name: "Ahmed Raafat Abdel-Hamid Awad Mansour", quiz1: "", mid: "8.0" },
+            { nationalId: "30511011809595.0", id: "2401167.0", name: "احمد محمود امين عبدالحق السيسى", quiz1: "1.0", mid: "2.0" },
+            { nationalId: "30511051800116.0", id: "2401169.0", name: "محمد قدرى عبدالحميد محمد سلامه", quiz1: "", mid: "4.0" },
+            { nationalId: "30511071701424.0", id: "2401170.0", name: "نورهان محمد عبدالوهاب محمد قيقه", quiz1: "0.0", mid: "4.0" },
+            { nationalId: "30511111703298.0", id: "2401172.0", name: "عيد نوح عيد نوح صالح", quiz1: "10.0", mid: "14.0" },
+            { nationalId: "30511132200911.0", id: "2401173.0", name: "Ahmed Shaaban Sedeq Gomaa", quiz1: "4.0", mid: "5.0" },
+            { nationalId: "30511130200965.0", id: "2401174.0", name: "لجين احمد كاظم محمد كمال الدين عبدالله", quiz1: "13.0", mid: "12.0" },
+            { nationalId: "30511201700484.0", id: "2401177.0", name: "ميرنا عماد سمير حنا منقريوس", quiz1: "9.0", mid: "" },
+            { nationalId: "30511221700189.0", id: "2401178.0", name: "حبيبه علاء احمد عبدالمنعم زايد", quiz1: "0.0", mid: "12.0" },
+            { nationalId: "30511231700799.0", id: "2401179.0", name: "عبدالرحمن محمد منير محمد مصطفى", quiz1: "1.0", mid: "11.0" },
+            { nationalId: "30511271702573.0", id: "2401180.0", name: "ايمن صابر حافظ امين محرات", quiz1: "9.0", mid: "10.0" },
+            { nationalId: "30511298800232.0", id: "2401181.0", name: "Ahmed Mahmoud Mahmoud Othman", quiz1: "13.0", mid: "20.0" },
+            { nationalId: "30512011800659.0", id: "2401182.0", name: "محمد احمد رياض احمد عبدالنبى", quiz1: "0.0", mid: "10.0" },
+            { nationalId: "30512011502887.0", id: "2401184.0", name: "علياء جمعه عبدالحليم عبدالحليم الرفاعى", quiz1: "3.0", mid: "13.0" },
+            { nationalId: "30512011810255.0", id: "2401186.0", name: "محمد صبحى ابراهيم عبدالله", quiz1: "1.0", mid: "" },
+            { nationalId: "30512031702955.0", id: "2401187.0", name: "عبدالرحمن محمد ابراهيم زين ابراهيم", quiz1: "", mid: "4.0" },
+            { nationalId: "30512091700978.0", id: "2401189.0", name: "Mohamed Ashraf Ahmed Ali Zayda", quiz1: "0.0", mid: "8.0" },
+            { nationalId: "30512091701095.0", id: "2401190.0", name: "Ahmed Mahmoud Mohamed Mahmoud Khairallah", quiz1: "14.0", mid: "20.0" },
+            { nationalId: "30512121702296.0", id: "2401191.0", name: "Ahmed Rashad Suleiman Mohamed Ottman", quiz1: "", mid: "" },
+            { nationalId: "30512151700328.0", id: "2401192.0", name: "Marfi Medhat Moasad Saeed Girgis", quiz1: "3.0", mid: "16.0" },
+            { nationalId: "30512171701258.0", id: "2401193.0", name: "Mohy Eldin Yasser Mohy Eldin Mohamed Aboelfadl", quiz1: "4.0", mid: "20.0" },
+            { nationalId: "30512241702192.0", id: "2401197.0", name: "Ahmed Emad Mouwad Mohamed Ali", quiz1: "4.0", mid: "14.0" },
+            { nationalId: "30601011820113.0", id: "2401198.0", name: "Gerges Hana Basta Hana Suleiman", quiz1: "2.0", mid: "6.0" },
+            { nationalId: "30601041802594.0", id: "2401199.0", name: "Ayman Reda Shahbour Hafez", quiz1: "4.0", mid: "8.0" },
+            { nationalId: "30601051701427.0", id: "2401200.0", name: "Mariam Mohamed Mounir Ibrahim Awad", quiz1: "12.0", mid: "13.0" },
+            { nationalId: "30601051701435.0", id: "2401201.0", name: "Ahmed Reda Ali El-Sayed Aziz", quiz1: "7.0", mid: "20.0" },
+            { nationalId: "30601111702479.0", id: "2401202.0", name: "Omar Abdelhamid Suleiman Ali Khawaga", quiz1: "3.0", mid: "10.0" },
+            { nationalId: "30601121802153.0", id: "2401204.0", name: "Omar Sameh Fathy Amin Abdel Aleem", quiz1: "0.0", mid: "7.0" },
+            { nationalId: "30601201701803.0", id: "2401207.0", name: "Nada Abdel-Fattah Ali Zidan", quiz1: "", mid: "13.0" },
+            { nationalId: "30601211702573.0", id: "2401208.0", name: "Ahmed Nady Abdel Moamen Ahmed Shaheen", quiz1: "6.0", mid: "7.0" },
+            { nationalId: "30601211701259.0", id: "2401209.0", name: "Mahfouz Basheer Gamal Mamoun Suleiman", quiz1: "13.0", mid: "20.0" },
+            { nationalId: "30601241700338.0", id: "2401210.0", name: "Omar Mohamed Abdel Azim El Sayed Ibrahim", quiz1: "0.0", mid: "11.0" },
+            { nationalId: "30601251702819.0", id: "2401212.0", name: "Abdelrahman Sameh Sadeq El Eswad", quiz1: "2.0", mid: "4.0" },
+            { nationalId: "30601291701653.0", id: "2401216.0", name: "Youssef Ibrahim Youssef Ahmed Moussa", quiz1: "0.0", mid: "4.0" },
+            { nationalId: "30602021703618.0", id: "2401219.0", name: "Abdelrahman Rafat Abd Rabbo Abdel Tawab", quiz1: "5.0", mid: "16.0" },
+            { nationalId: "30602081701967.0", id: "2401223.0", name: "Basma Badr Abdel Latif Abdelmajid Hamad", quiz1: "3.0", mid: "17.0" },
+            { nationalId: "30602101700377.0", id: "2401224.0", name: "Islam Mohamed Fawzy Basyouni Azab", quiz1: "0.0", mid: "12.0" },
+            { nationalId: "30602151403373.0", id: "2401226.0", name: "Mohamed Mostafa Ahmed Mostafa Hilal", quiz1: "0.0", mid: "11.0" },
+            { nationalId: "30602151801379.0", id: "2401227.0", name: "Adel Mamdouh Hamed Mohamed Rashad Deliour", quiz1: "5.0", mid: "6.0" },
+            { nationalId: "30602161801245.0", id: "2401228.0", name: "Malak Sabry Metwally Abdallah", quiz1: "1.0", mid: "10.0" },
+            { nationalId: "30602201806296.0", id: "2401230.0", name: "Khattab Mohamed Motawe Hamida", quiz1: "", mid: "3.0" },
+            { nationalId: "30602238800646.0", id: "2401231.0", name: "Rawda Ahmed Hamed Ahmed El Mehy", quiz1: "13.0", mid: "20.0" },
+            { nationalId: "30602261700454.0", id: "2401233.0", name: "Ahmed Wael Ali Ali Rabi", quiz1: "3.0", mid: "11.0" },
+            { nationalId: "30602278800045.0", id: "2401234.0", name: "Jihad Magdy Ibrahim El-Dessouky", quiz1: "3.0", mid: "16.0" },
+            { nationalId: "30603011701397.0", id: "2401235.0", name: "Youssef Hussein Mohamed Matar", quiz1: "7.0", mid: "12.0" },
+            { nationalId: "30603091701546.0", id: "2401237.0", name: "Eman Magdy Mostafa Ali El-Fakharany", quiz1: "8.0", mid: "11.0" },
+            { nationalId: "30603111701203.0", id: "2401239.0", name: "Rowan Fawzi Shawqi Gaber Khattab", quiz1: "2.0", mid: "11.0" },
+            { nationalId: "30603121702003.0", id: "2401241.0", name: "Nour Mohamed Imam Marzouk Rizk", quiz1: "6.0", mid: "20.0" },
+            { nationalId: "30603131602538.0", id: "2401242.0", name: "Mahmoud Reda Shawqi Amin Rady", quiz1: "5.0", mid: "16.0" },
+            { nationalId: "30603181700573.0", id: "2401244.0", name: "Adel Abdel Nasser Ibrahim Abdel Halim Ibrahim", quiz1: "1.0", mid: "4.0" },
+            { nationalId: "30603211801345.0", id: "2401245.0", name: "Basmalah Alwany Hanfy Alwany Zanbaa", quiz1: "4.0", mid: "6.0" },
+            { nationalId: "30603221800673.0", id: "2401246.0", name: "Moaz Mahmoud Abdelsalam Mahmoud Helal", quiz1: "0.0", mid: "12.0" },
+            { nationalId: "30603221700458.0", id: "2401247.0", name: "Youssef Maher Fawzy El-Sawy El-Sarougy", quiz1: "3.0", mid: "8.0" },
+            { nationalId: "30604031700733.0", id: "2401253.0", name: "Saeed Abdel Maati Saeed Abdel Maati El Tarhi", quiz1: "4.0", mid: "8.0" },
+            { nationalId: "30604071701236.0", id: "2401254.0", name: "Ahmed Yasser Fathy Mohamed Shaalan", quiz1: "7.0", mid: "20.0" },
+            { nationalId: "30604121702476.0", id: "2401256.0", name: "ziad ahmed fathy darwish elmeligy", quiz1: "5.0", mid: "7.0" },
+            { nationalId: "30604151802416.0", id: "2401258.0", name: "Galal Ahmed Galal Tawfiq", quiz1: "0.0", mid: "12.0" },
+            { nationalId: "30604181501631.0", id: "2401262.0", name: "Abdelrahman Azouz Abdo Abdelaziz El Shaabany", quiz1: "2.0", mid: "9.0" },
+            { nationalId: "30604201402082.0", id: "2401265.0", name: "Mariam Labib Nabil Badawy Abdel-Fattah", quiz1: "0.0", mid: "8.0" },
+            { nationalId: "30604201700768.0", id: "2401266.0", name: "Nour Sameh Mohamed Matar", quiz1: "0.0", mid: "7.0" },
+            { nationalId: "30604211701304.0", id: "2401267.0", name: "Raneem Osama Mohamed El Batakoushi", quiz1: "", mid: "5.0" },
+            { nationalId: "30604231801267.0", id: "2401269.0", name: "Habiba Thaer Mahmoud Abdel Latif El-Haddad", quiz1: "1.0", mid: "8.0" },
+            { nationalId: "30604261801423.0", id: "2401271.0", name: "Menna Allah Mohamed Mortada Abdelaziz Khalifa", quiz1: "2.0", mid: "1.0" },
+            { nationalId: "30604261700813.0", id: "2401272.0", name: "Mohamed Magdy Bakry Daraz", quiz1: "", mid: "10.0" },
+            { nationalId: "30604281700259.0", id: "2401275.0", name: "Ziad Saad Mohamed Saad Al-mallah", quiz1: "0.0", mid: "11.0" },
+            { nationalId: "30604291701024.0", id: "2401276.0", name: "Amira Amr Mahmoud Mohamed El-Damhougy", quiz1: "6.0", mid: "12.0" },
+            { nationalId: "30605012302537.0", id: "2401279.0", name: "Khaled Rabie Gomaa Ghanem", quiz1: "10.0", mid: "12.0" },
+            { nationalId: "30605031800548.0", id: "2401283.0", name: "Asmaa Saeed Elsayed Hamid Al-Attar", quiz1: "8.0", mid: "8.0" },
+            { nationalId: "30605041701149.0", id: "2401284.0", name: "Ghadir Mahmoud Mostafa Mahmoud Abu Shoaib", quiz1: "10.0", mid: "14.0" },
+            { nationalId: "30605041700738.0", id: "2401285.0", name: "مازن محمد محمود زايد", quiz1: "0.0", mid: "9.0" },
+            { nationalId: "30605051800978.0", id: "2401286.0", name: "محمد فارس صبرى يوسف عمار", quiz1: "1.0", mid: "10.0" },
+            { nationalId: "30605061701579.0", id: "2401287.0", name: "Mohamed Mahmoud Shaaban El Sayed Ramadan", quiz1: "2.0", mid: "17.0" },
+            { nationalId: "30605061800186.0", id: "2401288.0", name: "ساره احمد محمد عبدالحميد", quiz1: "9.0", mid: "5.0" },
+            { nationalId: "30605061501499.0", id: "2401289.0", name: "محمد علاء محمد عبدالحميد عبدالحميد جربيع", quiz1: "12.0", mid: "" },
+            { nationalId: "30605088801168.0", id: "2401291.0", name: "Areej Anwar Basyouni Amer Abu Amer", quiz1: "1.0", mid: "10.0" },
+            { nationalId: "30605101700783.0", id: "2401293.0", name: "ساره سعيد جابر محمد الرفاعى", quiz1: "12.0", mid: "19.0" },
+            { nationalId: "30605231601795.0", id: "2401294.0", name: "Ibrahim Mohamed Abdel-Fattah El-Shal", quiz1: "5.0", mid: "8.0" },
+            { nationalId: "30605141803356.0", id: "2401295.0", name: "Ibrahim Mahmoud Ahmed Abdel-Qader Ismail", quiz1: "", mid: "8.0" },
+            { nationalId: "30605151704313.0", id: "2401299.0", name: "محمد عبدالحليم هارون عبدالعظيم ابراهيم جاد", quiz1: "7.0", mid: "6.0" },
+            { nationalId: "30605192101682.0", id: "2401303.0", name: "زينب جميل حسن محمود حسن الزواوى", quiz1: "1.0", mid: "8.0" },
+            { nationalId: "30605208800721.0", id: "2401304.0", name: "مها عصام عبدالحميد محمد قنديل", quiz1: "11.0", mid: "4.0" },
+            { nationalId: "30605201701744.0", id: "2401305.0", name: "شهد احمد رمضان زيدان", quiz1: "11.0", mid: "18.0" },
+            { nationalId: "30605201702791.0", id: "2401307.0", name: "مهاب احمد السيد نايل", quiz1: "6.0", mid: "8.0" },
+            { nationalId: "30605221600405.0", id: "2401308.0", name: "يمنى خالد مصطفى عبدالرحمن بسيونى", quiz1: "1.0", mid: "9.0" },
+            { nationalId: "30605291601352.0", id: "2401311.0", name: "Ahmed Ali Abdel Fattah Ali", quiz1: "5.0", mid: "13.0" },
+            { nationalId: "30606011801072.0", id: "2401312.0", name: "Ahmed Ramadan Mohamed Ali Abu Aisha", quiz1: "6.0", mid: "10.0" },
+            { nationalId: "30606021801577.0", id: "2401314.0", name: "Ahmed Sameh Abdel-Wahed Zaki", quiz1: "0.0", mid: "2.0" },
+            { nationalId: "30606061808159.0", id: "2401315.0", name: "معتز احمد محمد احمد ابراهيم خليفه", quiz1: "9.0", mid: "20.0" },
+            { nationalId: "30606061705341.0", id: "2401316.0", name: "Alaa Haitham Mohamed Mohamed Abou El-Naga", quiz1: "8.0", mid: "17.0" },
+            { nationalId: "30606070101378.0", id: "2401317.0", name: "احمد محمد ابواليزيد ابوالمجد", quiz1: "11.0", mid: "17.0" },
+            { nationalId: "30606102602544.0", id: "2401321.0", name: "نورهان عبدالسيد عبدالخير عبدالسيد", quiz1: "", mid: "14.0" },
+            { nationalId: "30606111701474.0", id: "2401323.0", name: "Taha El Basyouny Ibrahim Mohamed Ghoneim", quiz1: "0.0", mid: "13.0" },
+            { nationalId: "30606138800733.0", id: "2401324.0", name: "اياد ايهاب على دردير خليفه", quiz1: "5.0", mid: "8.0" },
+            { nationalId: "30606141803883.0", id: "2401325.0", name: "سلمى محمد على عبدالحميد مرعى", quiz1: "5.0", mid: "9.0" },
+            { nationalId: "30606201704731.0", id: "2401329.0", name: "محمد على عبدالواحد محمد عبدالواحد", quiz1: "4.0", mid: "8.0" },
+            { nationalId: "30606231700838.0", id: "2401331.0", name: "مروان احمد محمد سامى فرج علام", quiz1: "7.0", mid: "17.0" },
+            { nationalId: "30607013400691.0", id: "2401335.0", name: "كمال محمد كمال سليمان سلامه", quiz1: "12.0", mid: "19.0" },
+            { nationalId: "30607011503981.0", id: "2401336.0", name: "اميره سامى على ابراهيم ابوخضره", quiz1: "3.0", mid: "12.0" },
+            { nationalId: "30607011705177.0", id: "2401337.0", name: "محمود محمد عبدالفتاح احمد خميس", quiz1: "1.0", mid: "6.0" },
+            { nationalId: "30607198800097.0", id: "2401338.0", name: "Ahmed Moukhtar Abul Fotouh Abdel Aziz Farag", quiz1: "3.0", mid: "14.0" },
+            { nationalId: "30607051701824.0", id: "2401340.0", name: "امنيه عبدالله عباس عبدالسميع ابراهيم", quiz1: "9.0", mid: "11.0" },
+            { nationalId: "30607051501833.0", id: "2401341.0", name: "محمد السيد على على شاهين", quiz1: "1.0", mid: "8.0" },
+            { nationalId: "30607061600988.0", id: "2401342.0", name: "ميار احمد عبدالمنعم احمد كامل", quiz1: "3.0", mid: "17.0" },
+            { nationalId: "30607118800695.0", id: "2401348.0", name: "Ahmad Samir Ahmad Abdul Salam Kroush", quiz1: "", mid: "9.0" },
+            { nationalId: "30607131701795.0", id: "2401351.0", name: "Ahmed Salah Abdel Hamid Amin Saleha", quiz1: "2.0", mid: "8.0" },
+            { nationalId: "30607141701343.0", id: "2401352.0", name: "سهيله باهر منير محمود نصار", quiz1: "2.0", mid: "8.0" },
+            { nationalId: "30607151701511.0", id: "2401353.0", name: "محمد هانى نجاح النساج", quiz1: "2.0", mid: "6.0" },
+            { nationalId: "30607161701323.0", id: "2401354.0", name: "نورالهدى جميل على ابراهيم على", quiz1: "15.0", mid: "16.0" },
+            { nationalId: "30607171701151.0", id: "2401355.0", name: "محمد ايهاب ابراهيم محمد عرب", quiz1: "7.0", mid: "7.0" },
+            { nationalId: "30607221402215.0", id: "2401357.0", name: "Ahmed Hani Mohamed Ismail El-Nahal", quiz1: "", mid: "3.0" },
+            { nationalId: "30607231801371.0", id: "2401358.0", name: "شادى علاء انور عبدالفتاح ابوالخير", quiz1: "2.0", mid: "10.0" },
+            { nationalId: "30607231700362.0", id: "2401359.0", name: "مريم عادل علم الدين عمر احمد", quiz1: "10.0", mid: "17.0" },
+            { nationalId: "30607291701325.0", id: "2401361.0", name: "اسراء Amer Ali Amer Aresha", quiz1: "2.0", mid: "9.0" },
+            { nationalId: "30607291800927.0", id: "2401362.0", name: "حبيبه هشام حسن محمد غنيم", quiz1: "3.0", mid: "8.0" },
+            { nationalId: "30608011702441.0", id: "2401364.0", name: "مريم عصام السعيد احمد جاب الله", quiz1: "13.0", mid: "20.0" },
+            { nationalId: "30608011801032.0", id: "2401366.0", name: "احمد عطيه صابر عطيه", quiz1: "7.0", mid: "13.0" },
+            { nationalId: "30608011808827.0", id: "2401367.0", name: "Rawan Moustafa Mohamed Abdel Wahab Al-Lubni", quiz1: "0.0", mid: "7.0" },
+            { nationalId: "30608011706196.0", id: "2401368.0", name: "زياد عماد عبدالونيس احمد مقلد", quiz1: "6.0", mid: "16.0" },
+            { nationalId: "30608021701699.0", id: "2401369.0", name: "عمر ابراهيم عبدالغفار محمد", quiz1: "", mid: "10.0" },
+            { nationalId: "30608021701079.0", id: "2401370.0", name: "عبدالله محمد عبدالله عبدالحميد سويلم", quiz1: "7.0", mid: "12.0" },
+            { nationalId: "30608041802564.0", id: "2401371.0", name: "الشيماء محمد فتحى محمد الجندى", quiz1: "1.0", mid: "14.0" },
+            { nationalId: "30608051702991.0", id: "2401373.0", name: "Ahmed Tarek Mohamed Mohamed El-Shafie", quiz1: "1.0", mid: "" },
+            { nationalId: "30608071700235.0", id: "2401376.0", name: "محمد ناصر محمد حسن النجار", quiz1: "14.0", mid: "8.0" },
+            { nationalId: "30608081606148.0", id: "2401377.0", name: "فاطمه هانى عبدالفتاح مبروك", quiz1: "13.0", mid: "20.0" },
+            { nationalId: "30608081803806.0", id: "2401378.0", name: "Alaa Mohamed Mohamed Taher Lotfy", quiz1: "2.0", mid: "6.0" },
+            { nationalId: "30608101700138.0", id: "2401381.0", name: "محمد عادل معوض عطيه البسيونى", quiz1: "2.0", mid: "10.0" },
+            { nationalId: "30608101802445.0", id: "2401382.0", name: "رويدا محمد رجب فراج زيدان", quiz1: "7.0", mid: "8.0" },
+            { nationalId: "30608121701068.0", id: "2401385.0", name: "امانى ايمن عبدالهادى عماره", quiz1: "1.0", mid: "6.0" },
+            { nationalId: "30608131800757.0", id: "2401387.0", name: "Ahmed El-Hassan Ahmed Mohamed Khaleel", quiz1: "9.0", mid: "14.0" },
+            { nationalId: "30608151701445.0", id: "2401390.0", name: "ملك سامر حسام الدين حسام الدين", quiz1: "9.0", mid: "7.0" },
+            { nationalId: "30608161702245.0", id: "2401391.0", name: "ايه ايمن محمد عبدالجواد", quiz1: "2.0", mid: "14.0" },
+            { nationalId: "30608191700131.0", id: "2401393.0", name: "انس محمود عطيه غريب على", quiz1: "2.0", mid: "8.0" },
+            { nationalId: "30608201701956.0", id: "2401396.0", name: "خالد عمرو رمضان سالم زلابيه", quiz1: "4.0", mid: "17.0" },
+            { nationalId: "30608228800573.0", id: "2401397.0", name: "محمد جمال محمد على عيسى", quiz1: "1.0", mid: "4.0" },
+            { nationalId: "30608231701411.0", id: "2401398.0", name: "معاذ سعيد المحمدي محمود عيد", quiz1: "4.0", mid: "16.0" },
+            { nationalId: "30608251700063.0", id: "2401402.0", name: "شهد عبدالله محمد السيد عطا", quiz1: "9.0", mid: "18.0" },
+            { nationalId: "30608251700888.0", id: "2401404.0", name: "fatma Mahmoud Ebrahim Afify AbdElwahed", quiz1: "7.0", mid: "9.0" },
+            { nationalId: "30608271402107.0", id: "2401405.0", name: "ايمان اشرف محمد احمد غريب", quiz1: "9.0", mid: "13.0" },
+            { nationalId: "30608281800275.0", id: "2401406.0", name: "محمد ياسر محمود حسين صبره", quiz1: "7.0", mid: "11.0" },
+            { nationalId: "30608291800443.0", id: "2401408.0", name: "شهد عمرو عبدالعزيز عبدالحميد", quiz1: "", mid: "17.0" },
+            { nationalId: "30608310203036.0", id: "2401409.0", name: "عمر اشرف محمد عبدالحى", quiz1: "1.0", mid: "" },
+            { nationalId: "30609011806324.0", id: "2401411.0", name: "سهيله محفوظ محمد محمود الجهورى", quiz1: "3.0", mid: "18.0" },
+            { nationalId: "30609021800049.0", id: "2401413.0", name: "هنا عبده محمد عبده الباسوسى", quiz1: "9.0", mid: "20.0" },
+            { nationalId: "30609031701502.0", id: "2401415.0", name: "Roaa Ali Abdullah Mohamed Elqen", quiz1: "13.0", mid: "20.0" },
+            { nationalId: "30609081701821.0", id: "2401418.0", name: "مريم على لطفى عبدالرحمن النادى", quiz1: "2.0", mid: "3.0" },
+            { nationalId: "30609091703423.0", id: "2401419.0", name: "ميار ماهر على غريب على شحاته", quiz1: "0.0", mid: "1.0" },
+            { nationalId: "30609101804266.0", id: "2401420.0", name: "ايه على عبدالستار على حسن خلف", quiz1: "2.0", mid: "3.0" },
+            { nationalId: "30609101701912.0", id: "2401421.0", name: "سعيد سامى سعيد عبدالفتاح مشاحيت", quiz1: "8.0", mid: "20.0" },
+            { nationalId: "30609101601543.0", id: "2401423.0", name: "منه فتحى احمد عبدالفتاح خطاب", quiz1: "5.0", mid: "7.0" },
+            { nationalId: "30609148801044.0", id: "2401429.0", name: "روان عاطف محمد عبدالمعطى", quiz1: "6.0", mid: "4.0" },
+            { nationalId: "30609141700277.0", id: "2401430.0", name: "محمود نصر المرسى ابوطريه عليمى", quiz1: "13.0", mid: "17.0" },
+            { nationalId: "30609141203176.0", id: "2401431.0", name: "يوسف رضا هادي حسن احمد", quiz1: "6.0", mid: "6.0" },
+            { nationalId: "30609181701179.0", id: "2401436.0", name: "بلال ابراهيم سليمان محمد البتانونى", quiz1: "0.0", mid: "5.0" },
+            { nationalId: "30609211804423.0", id: "2401437.0", name: "عفاف مجدى محمد محمد سابق", quiz1: "7.0", mid: "9.0" },
+            { nationalId: "30609221600818.0", id: "2401438.0", name: "يوسف عبدالحميد صبحى عبدالحميد غازى", quiz1: "9.0", mid: "11.0" },
+            { nationalId: "30609221700596.0", id: "2401440.0", name: "شريف محمد شديد شديد خربوش", quiz1: "", mid: "4.0" },
+            { nationalId: "30609241203785.0", id: "2401442.0", name: "ملك رجب ابراهيم السيد على", quiz1: "10.0", mid: "13.0" },
+            { nationalId: "30609251704073.0", id: "2401445.0", name: "يوسف ربيع زكريا على السيد شحاته", quiz1: "7.0", mid: "9.0" },
+            { nationalId: "30609260105247.0", id: "2401446.0", name: "رضوى وليد على خميس على", quiz1: "2.0", mid: "4.0" },
+            { nationalId: "30609291700046.0", id: "2401451.0", name: "حبيبه سعيد على على سليمان", quiz1: "6.0", mid: "10.0" },
+            { nationalId: "30609291802353.0", id: "2401452.0", name: "محمد صلاح بسيونى محمد", quiz1: "4.0", mid: "10.0" },
+            { nationalId: "30609301706935.0", id: "2401454.0", name: "فتحى محمد فتحى محمد خليفه", quiz1: "11.0", mid: "17.0" },
+            { nationalId: "30610011714592.0", id: "2401456.0", name: "محمد سعيد محمد تهامى مطر", quiz1: "5.0", mid: "10.0" },
+            { nationalId: "30610011713154.0", id: "2401458.0", name: "محمد عبدالرازق محمد عبدالرازق يونس", quiz1: "2.0", mid: "7.0" },
+            { nationalId: "30610011833109.0", id: "2401459.0", name: "Asmaa Ali Abdelaziz Ali El-Qassas", quiz1: "4.0", mid: "8.0" },
+            { nationalId: "30610011814651.0", id: "2401460.0", name: "عبدالله ياسر عبدالله سعد عبدالله", quiz1: "0.0", mid: "1.0" },
+            { nationalId: "30610011700486.0", id: "2401461.0", name: "ايمان سعيد ربيع محمد سالم", quiz1: "9.0", mid: "10.0" },
+            { nationalId: "30610011710171.0", id: "2401463.0", name: "محمود طلعت عبدالمعطى سيد احمد عبدالله", quiz1: "5.0", mid: "17.0" },
+            { nationalId: "30610011709491.0", id: "2401464.0", name: "زياد محمد السيد عبداللطيف هاشم", quiz1: "0.0", mid: "2.0" },
+            { nationalId: "30610038800652.0", id: "2401467.0", name: "محمد عماد محمد نجم ناصف", quiz1: "9.0", mid: "18.0" },
+            { nationalId: "30610071701287.0", id: "2401470.0", name: "مريم وليد سعيد عبدالحميد", quiz1: "4.0", mid: "5.0" },
+            { nationalId: "30610141700984.0", id: "2401472.0", name: "نوران هانى عبدالعزيز عباس علام", quiz1: "5.0", mid: "8.0" },
+            { nationalId: "30610161700913.0", id: "2401474.0", name: "Mohamed El Sayed Ragab El Sayed Said", quiz1: "", mid: "0.0" },
+            { nationalId: "30610181803263.0", id: "2401475.0", name: "روان محمد على محمد البهوفى", quiz1: "12.0", mid: "10.0" },
+            { nationalId: "30610201700598.0", id: "2401477.0", name: "يوسف محمد صبحى عبدالعزيز عبدالله", quiz1: "2.0", mid: "6.0" },
+            { nationalId: "30610251702281.0", id: "2401478.0", name: "حبيبه سامى حسن حاموله", quiz1: "5.0", mid: "11.0" },
+            { nationalId: "30611011704275.0", id: "2401480.0", name: "حازم وليد عبدالصبورعبدالرازق سالم", quiz1: "13.0", mid: "" },
+            { nationalId: "30611061702958.0", id: "2401483.0", name: "Ahmed khaled Fawzt Mohamed Elsayed", quiz1: "0.0", mid: "7.0" },
+            { nationalId: "30611071800095.0", id: "2401484.0", name: "حسام عبدالمعطى حامد عباس عبدالعال", quiz1: "6.0", mid: "9.0" },
+            { nationalId: "30611151703414.0", id: "2401487.0", name: "يوسف محمد حمدى عبدالستار عيسى", quiz1: "12.0", mid: "17.0" },
+            { nationalId: "30611152103836.0", id: "2401489.0", name: "حسين محمد حسين على على", quiz1: "3.0", mid: "12.0" },
+            { nationalId: "30611181700347.0", id: "2401490.0", name: "Doaa Ahmed Mohamed Eid Al-sayed", quiz1: "7.0", mid: "13.0" },
+            { nationalId: "30611191601509.0", id: "2401491.0", name: "نورهان صالح حمدان احمد حموده", quiz1: "3.0", mid: "10.0" },
+            { nationalId: "30611211701793.0", id: "2401492.0", name: "سليمان حسن حسين خلف", quiz1: "0.0", mid: "6.0" },
+            { nationalId: "30611221201268.0", id: "2401493.0", name: "زهراء محمود احمد ابراهيم سلطان", quiz1: "", mid: "8.0" },
+            { nationalId: "30612121702657.0", id: "2401501.0", name: "محمد صلاح محمد عبدالهادى كركيت", quiz1: "", mid: "10.0" },
+            { nationalId: "30612151701663.0", id: "2401502.0", name: "منه الله طارق محمد محمد الشافعى", quiz1: "13.0", mid: "13.0" },
+            { nationalId: "30612181701951.0", id: "2401503.0", name: "Ibrahim Ahmed Ibrahim El-sayed Zalabia", quiz1: "0.0", mid: "5.0" },
+            { nationalId: "30612191701941.0", id: "2401504.0", name: "ملك ناصر سعيد عبد الحميد ابراهيم", quiz1: "3.0", mid: "12.0" },
+            { nationalId: "30612248800178.0", id: "2401506.0", name: "محمد على عبدالله الزفزاف", quiz1: "0.0", mid: "10.0" },
+            { nationalId: "30612248801484.0", id: "2401507.0", name: "Jana Ahmed Mohamed Salah Mohamed Elzamzamy", quiz1: "6.0", mid: "4.0" },
+            { nationalId: "30701011706633.0", id: "2401511.0", name: "محمد عبده غريب عبده القعب", quiz1: "8.0", mid: "3.0" },
+            { nationalId: "30701021700196.0", id: "2401512.0", name: "محمد احمد سيد احمد عبدالسلام الصباغ", quiz1: "", mid: "4.0" },
+            { nationalId: "30701061403461.0", id: "2401513.0", name: "ياسمين عبدالفتاح محمد عبدالمنعم محمد", quiz1: "6.0", mid: "12.0" },
+            { nationalId: "30701081800289.0", id: "2401514.0", name: "امنيه على عبدالنبى على جمعه", quiz1: "9.0", mid: "10.0" },
+            { nationalId: "30701081701809.0", id: "2401515.0", name: "بسنت هانى عبدالسميع حامد زيد", quiz1: "5.0", mid: "5.0" },
+            { nationalId: "30701101806009.0", id: "2401516.0", name: "بسمله عصام ابراهيم عبدالعزيز طمان", quiz1: "3.0", mid: "4.0" },
+            { nationalId: "30701141701781.0", id: "2401517.0", name: "منه الله محمد صلاح الدين محمد البقرى", quiz1: "5.0", mid: "11.0" },
+            { nationalId: "30701181802246.0", id: "2401520.0", name: "رحمه عبدالله متولى عبدالله", quiz1: "0.0", mid: "9.0" },
+            { nationalId: "30701191601532.0", id: "2401521.0", name: "محمد مختار عبدالمقصود جاهين", quiz1: "0.0", mid: "1.0" },
+            { nationalId: "30701191700034.0", id: "2401522.0", name: "محمد احمد محمد هانى صالح المعزاوى", quiz1: "6.0", mid: "16.0" },
+            { nationalId: "30701261800848.0", id: "2401525.0", name: "بسنت احمد سعد حسن راشد", quiz1: "4.0", mid: "18.0" },
+            { nationalId: "30702011805018.0", id: "2401526.0", name: "يوسف محمود عبدالمقصود عبدالمقصود عبدالعزيز ابوعلى", quiz1: "14.0", mid: "20.0" },
+            { nationalId: "30702021701156.0", id: "2401527.0", name: "عمر سعد سليمان محمود عثمان", quiz1: "15.0", mid: "20.0" },
+            { nationalId: "30702151802094.0", id: "2401529.0", name: "Ahmed Ihab Abdel-Latif Ali Yehia", quiz1: "6.0", mid: "13.0" },
+            { nationalId: "30702190106151.0", id: "2401530.0", name: "محمد هانى احمد عبدالمقصود محمد", quiz1: "7.0", mid: "2.0" },
+            { nationalId: "30702251403197.0", id: "2401531.0", name: "زياد السيد عبدالله عبدالرحمن غنيمى", quiz1: "6.0", mid: "14.0" },
+            { nationalId: "30703048800268.0", id: "2401532.0", name: "Israa Mohsen Samir Mohamed Omar", quiz1: "11.0", mid: "20.0" },
+            { nationalId: "30703058800711.0", id: "2401533.0", name: "Ahmed Yasser Ibrahim Abdelaziz", quiz1: "", mid: "10.0" },
+            { nationalId: "30703081702085.0", id: "2401534.0", name: "ملك عاطف عبدالمقصود محمد شلبى", quiz1: "12.0", mid: "8.0" },
+            { nationalId: "30703131201902.0", id: "2401535.0", name: "ريم ايمن محمد احمد", quiz1: "10.0", mid: "5.0" },
+            { nationalId: "30703141701792.0", id: "2401536.0", name: "محمد عبدالسلام عبدالرؤف محمد العكل", quiz1: "2.0", mid: "6.0" },
+            { nationalId: "30703142102841.0", id: "2401537.0", name: "جنى اكرم عبدالرحمن امام", quiz1: "5.0", mid: "10.0" },
+            { nationalId: "30703161702051.0", id: "2401538.0", name: "مؤمن ميمى محمد محمد مصطفى درويش", quiz1: "0.0", mid: "2.0" },
+            { nationalId: "30703298800425.0", id: "2401542.0", name: "منه الله ايهاب عبدالمحسن اسماعيل عبدربه", quiz1: "2.0", mid: "5.0" },
+            { nationalId: "30704161700233.0", id: "2401543.0", name: "نور تامر فهمى عبدالحليم عامر", quiz1: "", mid: "2.0" },
+            { nationalId: "30608061803427.0", id: "2401544.0", name: "mai samy sedky mostafa", quiz1: "10.0", mid: "17.0" },
+            { nationalId: "30512211802753.0", id: "2401545.0", name: "Hisham Rabie Mohamed Ahmad Abdel Kadr", quiz1: "12.0", mid: "20.0" },
+            { nationalId: "30602251700243.0", id: "2401547.0", name: "Arwa Ragab Abdelhafez Abdelalim Abdelfattah", quiz1: "2.0", mid: "4.0" },
+            { nationalId: "30512101702435.0", id: "2401549.0", name: "ali Mohamed Abdeltwab Eldokany", quiz1: "9.0", mid: "20.0" },
+            { nationalId: "30604201701225.0", id: "2401551.0", name: "Amany Anwer Mohammed Seliem", quiz1: "15.0", mid: "20.0" },
+            { nationalId: "30611141701871.0", id: "2401553.0", name: "Mostafa Mahmoud Abdelrazik Abdo", quiz1: "2.0", mid: "" },
+            { nationalId: "30610011813647.0", id: "2401554.0", name: "Yasmine Abdelnaser Mohamed Nafady", quiz1: "13.0", mid: "15.0" },
+            { nationalId: "30604151801797.0", id: "2401555.0", name: "Abdallah Hassanein Mohamed Hassanein", quiz1: "10.0", mid: "4.0" },
+            { nationalId: "30604018800761.0", id: "2401557.0", name: "Mawada khaled Fared Salama", quiz1: "4.0", mid: "3.0" },
+            { nationalId: "30603181700522.0", id: "2401558.0", name: "Leqaa Ezzat Wageed Hamd", quiz1: "1.0", mid: "4.0" },
+            { nationalId: "30608201700828.0", id: "2401560.0", name: "Basmala Ahmed Hamid Abdel Shafouq Ali", quiz1: "4.0", mid: "6.0" },
+            { nationalId: "30607201702557.0", id: "2401562.0", name: "Mohamed Sophy Farag Afifi", quiz1: "0.0", mid: "8.0" },
+            { nationalId: "30605201700802.0", id: "2401563.0", name: "Malak Ashraf Al Basyouni Eissa", quiz1: "7.0", mid: "8.0" },
+            { nationalId: "30604291800758.0", id: "2401567.0", name: "Ahmed Mohmed Abd Ellatef El Gayar", quiz1: "0.0", mid: "10.0" },
+            { nationalId: "30608101702548.0", id: "2401569.0", name: "Alaa Ali Mohamed Abdulhamid Elashkar", quiz1: "6.0", mid: "11.0" },
+            { nationalId: "30602101701764.0", id: "2401571.0", name: "Rahma Hany Lotfy Emara", quiz1: "9.0", mid: "13.0" },
+            { nationalId: "30508081800284.0", id: "2401572.0", name: "fatma meawad metwally abdallah", quiz1: "13.0", mid: "20.0" },
+            { nationalId: "30506181701841.0", id: "2401574.0", name: "samya ashraf shawky shalaby", quiz1: "15.0", mid: "20.0" },
+            { nationalId: "30512011800268.0", id: "2401575.0", name: "shahd elwany mohamed shaban", quiz1: "6.0", mid: "6.0" },
+            { nationalId: "30602012100579.0", id: "2401576.0", name: "ammar ashraf fisal akrab", quiz1: "3.0", mid: "4.0" },
+            { nationalId: "30608141701536.0", id: "2401581.0", name: "Ali Essam Saeed Dargham", quiz1: "1.0", mid: "7.0" },
+            { nationalId: "30701181700087.0", id: "2401584.0", name: "Hagr Hashem Abdelghfour Saed", quiz1: "10.0", mid: "7.0" },
+            { nationalId: "30701221701227.0", id: "2401586.0", name: "mariam Mohamed Ahmed Sobhy Elhamoly", quiz1: "13.0", mid: "15.0" },
+            { nationalId: "30703071401788.0", id: "2401587.0", name: "Nesma Mohamed Abdelshafy Mohamed Shrif", quiz1: "4.0", mid: "8.0" },
+            { nationalId: "30606171700728.0", id: "2401589.0", name: "rawda alaa abdelalim morsi", quiz1: "11.0", mid: "16.0" },
+            { nationalId: "30608281700106.0", id: "2401593.0", name: "ملك وائل سعيد عبدالرحيم خليفه", quiz1: "13.0", mid: "19.0" },
+            { nationalId: "30605121800318.0", id: "2401594.0", name: "محمد محمد فتحى محمود ابراهيم", quiz1: "0.0", mid: "7.0" },
+            { nationalId: "30607280200642.0", id: "2401595.0", name: "Mariam Reda abdelhamed fathallah eid", quiz1: "14.0", mid: "20.0" },
+            { nationalId: "30604091701259.0", id: "2401597.0", name: "Ahmed Ali Saad Ibrahim Abu Zikri", quiz1: "1.0", mid: "" },
+            { nationalId: "30605111800204.0", id: "2401598.0", name: "sara osama abdelhamid kandil", quiz1: "10.0", mid: "8.0" },
+            { nationalId: "30610011812861.0", id: "2401600.0", name: "Omnia Ibrahim Ahmed Mohamed Selim", quiz1: "7.0", mid: "10.0" },
+            { nationalId: "30606061703772.0", id: "2401601.0", name: "Moaz Naser Eid Badran", quiz1: "10.0", mid: "15.0" },
+            { nationalId: "30703172104563.0", id: "2401540.0", name: "Alaa Ashraf Mohamed", quiz1: "12.0", mid: "" },
+            { nationalId: "30612211801697.0", id: "2401505.0", name: "Abdelrahman Hossam Abdullah", quiz1: "14.0", mid: "" },
+            { nationalId: "30609101805823.0", id: "2401422.0", name: "Zhraa Reda Mhamed Neweshy", quiz1: "3.0", mid: "" },
+            { nationalId: "30609091703415.0", id: "2401021.0", name: "Omar Mohamed Yousf", quiz1: "", mid: "6.0" },
+            { nationalId: "30606061700218.0", id: "2401050.0", name: "Ahmed Soliman Mousad", quiz1: "", mid: "2.0" },
+            { nationalId: "30604011403198.0", id: "2401060.0", name: "Ali Hassan Elsayed", quiz1: "", mid: "4.0" },
+            { nationalId: "333333.0", id: "2401121.0", name: "Ahmed Rashad Etman", quiz1: "", mid: "11.0" },
+            { nationalId: "30507210202449.0", id: "2401149.0", name: "Donia Ahmed Huddien", quiz1: "", mid: "4.0" },
+            { nationalId: "30604101503094.0", id: "2401255.0", name: "Yahia Mohamed Osman", quiz1: "", mid: "6.0" },
+            { nationalId: "30603211704684.0", id: "2401602.0", name: "Menna Allah Mustafa", quiz1: "", mid: "10.0" }
+        ];
+
+        function lookupStudent() {
+            const nationalIdInput = document.getElementById('nationalId').value.trim();
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            
+            // Clear previous results and errors
+            resultDiv.style.display = 'none';
+            errorDiv.textContent = '';
+            
+            if (!nationalIdInput) {
+                errorDiv.textContent = 'Please enter your National ID';
+                return;
+            }
+            
+            // Find the student in the data
+            const student = studentData.find(s => s.nationalId.startsWith(nationalIdInput));
+            
+            if (!student) {
+                errorDiv.textContent = 'No student found with this National ID';
+                return;
+            }
+            
+            // Display the student information
+            document.getElementById('displayNationalId').textContent = student.nationalId;
+            document.getElementById('studentId').textContent = student.id;
+            document.getElementById('studentName').textContent = student.name;
+            
+            // Display marks (handle empty values)
+            document.getElementById('quiz1').textContent = student.quiz1 === "" ? "Not available" : student.quiz1;
+            document.getElementById('midterm').textContent = student.mid === "" ? "Not available" : student.mid;
+            
+            // Show the result
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
